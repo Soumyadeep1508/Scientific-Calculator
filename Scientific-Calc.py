@@ -1,0 +1,254 @@
+import math
+import tkinter as tk
+
+import sympy as sp
+
+# Main window setup
+root = tk.Tk()
+root.title("Sophisticated Calculator")
+root.geometry("800x600")
+root.configure(bg="#2c2c2c")  # Dark theme background
+
+# Elegant font
+font_style = ("Palatino Linotype", 14)
+
+# Sidebar for navigation
+sidebar = tk.Frame(root, bg="#3c3c3c", width=200)
+sidebar.pack(side="left", fill="y")
+
+# Top bar
+top_bar = tk.Frame(root, bg="#3c3c3c", height=50)
+top_bar.pack(side="top", fill="x")
+app_title = tk.Label(top_bar, text="Sophisticated Calculator", font=("Palatino Linotype", 18, "bold"), bg="#3c3c3c", fg="white")
+app_title.pack(side="left", padx=10)
+
+# Main area for calculator interfaces
+main_area = tk.Frame(root, bg="#2c2c2c")
+main_area.pack(side="right", fill="both", expand=True)
+
+# Status bar for feedback
+status_bar = tk.Label(root, text="Ready", font=("Palatino Linotype", 10), bg="#2c2c2c", fg="white", anchor="w")
+status_bar.pack(side="bottom", fill="x")
+
+# Function to switch calculator types
+def switch_calculator(calc_type):
+    for widget in main_area.winfo_children():
+        widget.destroy()
+    if calc_type == "basic":
+        basic_arithmetic_ui()
+    elif calc_type == "emi":
+        emi_calculator_ui()
+    elif calc_type == "diff":
+        differential_calculus_ui()
+    elif calc_type == "int":
+        integral_calculus_ui()
+    elif calc_type == "log":
+        logarithmic_calculations_ui()
+    status_bar.config(text=f"Switched to {calc_type.capitalize()} Calculator")
+
+# Sidebar buttons
+calc_types = [
+    ("Basic Arithmetic", "basic"),
+    ("EMI Calculator", "emi"),
+    ("Differential Calculus", "diff"),
+    ("Integral Calculus", "int"),
+    ("Logarithmic Calculations", "log")
+]
+
+for text, calc_type in calc_types:
+    btn = tk.Button(sidebar, text=text, font=font_style, bg="#4c4c4c", fg="white", activebackground="#6c6c6c",
+                    command=lambda t=calc_type: switch_calculator(t))
+    btn.pack(fill="x", padx=10, pady=5)
+
+# Basic Arithmetic Calculator
+def basic_arithmetic_ui():
+    display = tk.Entry(main_area, font=("Palatino Linotype", 24), bg="#3c3c3c", fg="white", bd=0, justify="right")
+    display.grid(row=0, column=0, columnspan=4, padx=10, pady=10, sticky="nsew")
+
+    buttons = [
+        ('7', 1, 0), ('8', 1, 1), ('9', 1, 2), ('/', 1, 3),
+        ('4', 2, 0), ('5', 2, 1), ('6', 2, 2), ('*', 2, 3),
+        ('1', 3, 0), ('2', 3, 1), ('3', 3, 2), ('-', 3, 3),
+        ('0', 4, 0), ('.', 4, 1), ('C', 4, 2), ('+', 4, 3),
+        ('=', 5, 0, 1, 4)
+    ]
+
+    for btn in buttons:
+        if len(btn) == 5:
+            text, row, col, rowspan, colspan = btn
+            tk.Button(main_area, text=text, font=font_style, bg="#4c4c4c", fg="white", activebackground="#6c6c6c",
+                      command=lambda t=text: on_button_click(t)).grid(row=row, column=col, rowspan=rowspan,
+                                                                     columnspan=colspan, sticky="nsew", padx=5, pady=5)
+        else:
+            text, row, col = btn
+            tk.Button(main_area, text=text, font=font_style, bg="#4c4c4c", fg="white", activebackground="#6c6c6c",
+                      command=lambda t=text: on_button_click(t)).grid(row=row, column=col, sticky="nsew", padx=5, pady=5)
+
+    for i in range(6):
+        main_area.grid_rowconfigure(i, weight=1)
+    for i in range(4):
+        main_area.grid_columnconfigure(i, weight=1)
+
+    def on_button_click(char):
+        if char == '=':
+            try:
+                result = eval(display.get())
+                display.delete(0, tk.END)
+                display.insert(tk.END, str(result))
+                status_bar.config(text="Calculation successful")
+            except ZeroDivisionError:
+                display.delete(0, tk.END)
+                display.insert(tk.END, "Error: Division by zero")
+                status_bar.config(text="Error: Division by zero")
+            except Exception:
+                display.delete(0, tk.END)
+                display.insert(tk.END, "Error")
+                status_bar.config(text="Error: Invalid expression")
+        elif char == 'C':
+            display.delete(0, tk.END)
+            status_bar.config(text="Cleared")
+        else:
+            display.insert(tk.END, char)
+
+# EMI Calculator
+def emi_calculator_ui():
+    tk.Label(main_area, text="Loan Amount:", font=font_style, bg="#2c2c2c", fg="white").grid(row=0, column=0, padx=10, pady=10)
+    loan_amount = tk.Entry(main_area, font=font_style, bg="#3c3c3c", fg="white")
+    loan_amount.grid(row=0, column=1, padx=10, pady=10)
+
+    tk.Label(main_area, text="Annual Interest Rate (%):", font=font_style, bg="#2c2c2c", fg="white").grid(row=1, column=0, padx=10, pady=10)
+    annual_rate = tk.Entry(main_area, font=font_style, bg="#3c3c3c", fg="white")
+    annual_rate.grid(row=1, column=1, padx=10, pady=10)
+
+    tk.Label(main_area, text="Number of Installments:", font=font_style, bg="#2c2c2c", fg="white").grid(row=2, column=0, padx=10, pady=10)
+    installments = tk.Entry(main_area, font=font_style, bg="#3c3c3c", fg="white")
+    installments.grid(row=2, column=1, padx=10, pady=10)
+
+    result_label = tk.Label(main_area, text="", font=font_style, bg="#2c2c2c", fg="white")
+    result_label.grid(row=4, column=0, columnspan=2, padx=10, pady=10)
+
+    def calculate_emi():
+        try:
+            P = float(loan_amount.get())
+            annual_rate_percent = float(annual_rate.get())
+            N = int(installments.get())
+            if P <= 0 or annual_rate_percent <= 0 or N <= 0:
+                raise ValueError("Inputs must be positive numbers")
+            R = annual_rate_percent / (12 * 100)
+            EMI = P * R * ((1 + R) ** N) / ((1 + R) ** N - 1)
+            result_label.config(text=f"Monthly EMI: {EMI:.2f}")
+            status_bar.config(text="EMI calculated successfully")
+        except ValueError as e:
+            result_label.config(text=f"Error: {e}")
+            status_bar.config(text=f"Error: {e}")
+
+    tk.Button(main_area, text="Calculate EMI", font=font_style, bg="#4c4c4c", fg="white", activebackground="#6c6c6c",
+              command=calculate_emi).grid(row=3, column=0, columnspan=2, padx=10, pady=10)
+
+# Differential Calculus
+def differential_calculus_ui():
+    tk.Label(main_area, text="Enter function (e.g., x**2 + sin(x)):", font=font_style, bg="#2c2c2c", fg="white").grid(row=0, column=0, padx=10, pady=10)
+    func_entry = tk.Entry(main_area, font=font_style, bg="#3c3c3c", fg="white")
+    func_entry.grid(row=0, column=1, padx=10, pady=10)
+
+    result_label = tk.Label(main_area, text="", font=font_style, bg="#2c2c2c", fg="white")
+    result_label.grid(row=2, column=0, columnspan=2, padx=10, pady=10)
+
+    def differentiate():
+        x = sp.symbols('x')
+        try:
+            func = sp.sympify(func_entry.get())
+            derivative = sp.diff(func, x)
+            result_label.config(text=f"Derivative: {derivative}")
+            status_bar.config(text="Differentiation successful")
+        except Exception:
+            result_label.config(text="Error: Invalid function")
+            status_bar.config(text="Error: Invalid function")
+
+    tk.Button(main_area, text="Differentiate", font=font_style, bg="#4c4c4c", fg="white", activebackground="#6c6c6c",
+              command=differentiate).grid(row=1, column=0, columnspan=2, padx=10, pady=10)
+
+# Integral Calculus
+def integral_calculus_ui():
+    tk.Label(main_area, text="Enter function (e.g., x**2):", font=font_style, bg="#2c2c2c", fg="white").grid(row=0, column=0, padx=10, pady=10)
+    func_entry = tk.Entry(main_area, font=font_style, bg="#3c3c3c", fg="white")
+    func_entry.grid(row=0, column=1, padx=10, pady=10)
+
+    result_label = tk.Label(main_area, text="", font=font_style, bg="#2c2c2c", fg="white")
+    result_label.grid(row=2, column=0, columnspan=2, padx=10, pady=10)
+
+    def integrate():
+        x = sp.symbols('x')
+        try:
+            func = sp.sympify(func_entry.get())
+            integral = sp.integrate(func, x)
+            result_label.config(text=f"Integral: {integral} + C")
+            status_bar.config(text="Integration successful")
+        except Exception:
+            result_label.config(text="Error: Invalid function")
+            status_bar.config(text="Error: Invalid function")
+
+    tk.Button(main_area, text="Integrate", font=font_style, bg="#4c4c4c", fg="white", activebackground="#6c6c6c",
+              command=integrate).grid(row=1, column=0, columnspan=2, padx=10, pady=10)
+
+# Logarithmic Calculations
+def logarithmic_calculations_ui():
+    tk.Label(main_area, text="Select logarithm type:", font=font_style, bg="#2c2c2c", fg="white").grid(row=0, column=0, padx=10, pady=10)
+    log_type = tk.StringVar(value="ln")
+    tk.Radiobutton(main_area, text="Natural Log (ln)", variable=log_type, value="ln", font=font_style, bg="#2c2c2c", fg="white",
+                   selectcolor="#4c4c4c").grid(row=0, column=1, sticky="w")
+    tk.Radiobutton(main_area, text="Common Log (log10)", variable=log_type, value="log10", font=font_style, bg="#2c2c2c", fg="white",
+                   selectcolor="#4c4c4c").grid(row=1, column=1, sticky="w")
+    tk.Radiobutton(main_area, text="Custom Base", variable=log_type, value="custom", font=font_style, bg="#2c2c2c", fg="white",
+                   selectcolor="#4c4c4c").grid(row=2, column=1, sticky="w")
+
+    tk.Label(main_area, text="Enter number:", font=font_style, bg="#2c2c2c", fg="white").grid(row=3, column=0, padx=10, pady=10)
+    num_entry = tk.Entry(main_area, font=font_style, bg="#3c3c3c", fg="white")
+    num_entry.grid(row=3, column=1, padx=10, pady=10)
+
+    base_label = tk.Label(main_area, text="Enter base:", font=font_style, bg="#2c2c2c", fg="white")
+    base_entry = tk.Entry(main_area, font=font_style, bg="#3c3c3c", fg="white")
+
+    result_label = tk.Label(main_area, text="", font=font_style, bg="#2c2c2c", fg="white")
+    result_label.grid(row=5, column=0, columnspan=2, padx=10, pady=10)
+
+    def calculate_log():
+        try:
+            num = float(num_entry.get())
+            if num <= 0:
+                raise ValueError("Number must be positive")
+            if log_type.get() == "ln":
+                result = math.log(num)
+                result_label.config(text=f"ln({num}) = {result:.4f}")
+            elif log_type.get() == "log10":
+                result = math.log10(num)
+                result_label.config(text=f"log10({num}) = {result:.4f}")
+            elif log_type.get() == "custom":
+                base = float(base_entry.get())
+                if base <= 0 or base == 1:
+                    raise ValueError("Base must be positive and not 1")
+                result = math.log(num, base)
+                result_label.config(text=f"log_{base}({num}) = {result:.4f}")
+            status_bar.config(text="Logarithm calculated successfully")
+        except ValueError as e:
+            result_label.config(text=f"Error: {e}")
+            status_bar.config(text=f"Error: {e}")
+
+    def show_base_entry():
+        if log_type.get() == "custom":
+            base_label.grid(row=4, column=0, padx=10, pady=10)
+            base_entry.grid(row=4, column=1, padx=10, pady=10)
+        else:
+            base_label.grid_remove()
+            base_entry.grid_remove()
+
+    log_type.trace("w", lambda *args: show_base_entry())
+
+    tk.Button(main_area, text="Calculate", font=font_style, bg="#4c4c4c", fg="white", activebackground="#6c6c6c",
+              command=calculate_log).grid(row=6, column=0, columnspan=2, padx=10, pady=10)
+
+# Start with the basic calculator
+switch_calculator("basic")
+
+# Run the app
+root.mainloop()
